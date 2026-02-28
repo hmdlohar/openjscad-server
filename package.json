@@ -1,0 +1,17 @@
+{
+  "name": "jscad-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lightweight Node.js static server with a custom browser JSCAD editor",
+  "dependencies": {
+    "@jscad/modeling": "latest",
+    "@jscad/stl-serializer": "latest"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "DEV_LIVE_RELOAD=1 node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

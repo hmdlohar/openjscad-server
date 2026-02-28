@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSCAD Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>JSCAD Builder</h1>
+          <p>Vanilla JS editor with live geometry preview</p>
+        </div>
+        <div class="actions">
+          <a href="/server-preview.html" class="nav-link">Open Server Preview</a>
+          <button id="runBtn">Run</button>
+          <button id="newBtn">New</button>
+          <select id="sampleSelect" aria-label="Sample code">
+            <option value="default">Sample: Dome Block</option>
+            <option value="gearish">Sample: Gear-ish Wheel</option>
+            <option value="vase">Sample: Sculpted Vase</option>
+          </select>
+          <button id="loadSampleBtn">Load Sample</button>
+          <button id="openBtn">Import Code</button>
+          <button id="saveBtn">Export Code</button>
+          <button id="exportStlBtn">Export STL</button>
+          <input id="fileInput" type="file" accept=".js,.jscad,.txt" hidden />
+        </div>
+      </header>
+
+      <main class="main-grid">
+        <section class="editor-panel">
+          <div id="editor"></div>
+        </section>
+        <div id="splitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Resize panels"></div>
+
+        <section class="viewer-panel">
+          <div class="viewer-head">
+            <strong>Preview</strong>
+            <span id="status">Idle</span>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="viewerCanvas"></canvas>
+          </div>
+          <pre id="logPanel" aria-live="polite"></pre>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

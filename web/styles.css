@@ -1,0 +1,234 @@
+:root {
+  --bg: #f3f5f9;
+  --panel: #ffffff;
+  --panel-strong: #edf1f8;
+  --ink: #1a2234;
+  --muted: #4f5c78;
+  --accent: #0c7db8;
+  --accent-strong: #0a5f8c;
+  --border: #d4dcec;
+  --ok: #157f52;
+  --error: #a32626;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 0 0, #d8ecff 0, transparent 45%),
+    radial-gradient(circle at 100% 100%, #d9f8ef 0, transparent 35%),
+    var(--bg);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.app-shell {
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(120deg, #ffffff 0%, #eff5ff 60%, #e7f9f2 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  flex: 0 0 auto;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.topbar p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+button {
+  border: 1px solid #bad3ea;
+  background: #ffffff;
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #bad3ea;
+  background: #ffffff;
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  background: #f1f7ff;
+}
+
+select {
+  border: 1px solid #bad3ea;
+  background: #ffffff;
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+button:hover {
+  background: #f1f7ff;
+}
+
+button#runBtn,
+button#exportStlBtn {
+  border-color: var(--accent);
+  color: #fff;
+  background: linear-gradient(120deg, var(--accent), var(--accent-strong));
+}
+
+.main-grid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.editor-panel,
+.viewer-panel {
+  min-height: 0;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  box-shadow: 0 4px 16px rgba(31, 53, 79, 0.07);
+}
+
+.editor-panel {
+  overflow: hidden;
+  flex: 0 0 56%;
+  min-width: 280px;
+}
+
+.splitter {
+  flex: 0 0 10px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #dbe7f6 0%, #c9d9ef 100%);
+  border: 1px solid #bfd0e8;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.splitter:hover {
+  background: linear-gradient(180deg, #d2e1f3 0%, #b8cce7 100%);
+}
+
+#editor {
+  width: 100%;
+  height: 100%;
+}
+
+.viewer-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 8px;
+  min-height: 0;
+  flex: 1 1 44%;
+  min-width: 280px;
+  overflow: hidden;
+}
+
+.viewer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  padding: 8px 10px;
+}
+
+#status {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.canvas-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #f9fbff 0%, #e7eef9 100%);
+  overflow: hidden;
+}
+
+#viewerCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#logPanel {
+  margin: 0;
+  flex: 0 0 110px;
+  overflow: auto;
+  font-size: 0.83rem;
+  line-height: 1.35;
+  background: #f6f9fe;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  color: #32425d;
+}
+
+@media (max-width: 1024px) {
+  .main-grid {
+    flex-direction: column;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .splitter {
+    display: none;
+  }
+
+  .editor-panel,
+  .viewer-panel {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
