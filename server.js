@@ -74,7 +74,8 @@ function createJscadApi() {
     primitives,
     text,
     transforms,
-    utils
+    utils,
+    expansions
   } = jscadModeling;
 
   return {
@@ -89,20 +90,39 @@ function createJscadApi() {
     primitives,
     text,
     transforms,
-    utils
+    utils,
+    expansions
   };
 }
 
-function evaluateJscadSource(sourceText) {
+function evaluateJscadSource(sourceText, params = {}) {
   const api = createJscadApi();
   const wrapped = `${sourceText}
 
 if (typeof main === 'function') {
-  return main()
+  return main(params)
 }
 `;
-  const fn = new Function(...Object.keys(api), wrapped);
-  return normalizeJscadResult(fn(...Object.values(api)));
+  const fn = new Function(...Object.keys(api), 'params', wrapped);
+  return normalizeJscadResult(fn(...Object.values(api), params));
+}
+
+function getJscadParameterDefinitions(sourceText) {
+  const api = createJscadApi();
+  const wrapped = `${sourceText}
+
+if (typeof getParameterDefinitions === 'function') {
+  return getParameterDefinitions()
+}
+return []
+`;
+  try {
+    const fn = new Function(...Object.keys(api), wrapped);
+    return fn(...Object.values(api));
+  } catch (err) {
+    console.error('Failed to extract parameters:', err);
+    return [];
+  }
 }
 
 function parseJsonBody(req) {
@@ -232,6 +252,21 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'POST' && req.url === '/api/get-params') {
+      const payload = await parseJsonBody(req);
+      const modelPath = resolveModelPath(payload.filePath);
+      if (!modelPath) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'Invalid file path.' }));
+        return;
+      }
+      const source = await fsp.readFile(modelPath, 'utf8');
+      const params = getJscadParameterDefinitions(source);
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ params }));
+      return;
+    }
+
     if (req.method === 'POST' && req.url === '/api/server-render') {
       const payload = await parseJsonBody(req);
       const modelPath = resolveModelPath(payload.filePath);
@@ -243,7 +278,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       const source = await fsp.readFile(modelPath, 'utf8');
-      const solids = evaluateJscadSource(source);
+      const solids = evaluateJscadSource(source, payload.params || {});
       if (!solids.length) {
         res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ error: 'Model returned no geometry.' }));

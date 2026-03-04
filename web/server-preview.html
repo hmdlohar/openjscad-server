@@ -21,11 +21,21 @@
           <select id="fileSelect" aria-label="Model file"></select>
           <button id="refreshFilesBtn">Refresh Files</button>
           <button id="renderFileBtn">Render On Server</button>
+          <button id="downloadStlBtn">Download STL</button>
         </div>
       </header>
 
-      <main class="main-grid" style="display:block;">
-        <section class="viewer-panel" style="height:100%; min-width:0;">
+      <main class="main-grid">
+        <section class="parameter-panel">
+          <div class="panel-head">
+            <strong>Parameters</strong>
+          </div>
+          <div id="paramsContainer" class="params-list">
+            <p class="empty-params">Select a file to see parameters</p>
+          </div>
+        </section>
+
+        <section class="viewer-panel">
           <div class="viewer-head">
             <strong>Preview</strong>
             <span id="status">Idle</span>

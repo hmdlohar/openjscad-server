@@ -4,6 +4,7 @@ const renderFileBtn = document.getElementById('renderFileBtn');
 const statusEl = document.getElementById('status');
 const logPanel = document.getElementById('logPanel');
 const viewerCanvas = document.getElementById('viewerCanvas');
+const paramsContainer = document.getElementById('paramsContainer');
 
 let THREE;
 let OrbitControls;
@@ -15,6 +16,8 @@ let threeControls;
 let stlLoader;
 let modelGroup;
 let rafHandle;
+let lastStlData = '';
+let lastFileName = 'model.stl';
 
 function setStatus(text, isError = false) {
   statusEl.textContent = text;
@@ -150,6 +153,7 @@ async function fetchModelFiles() {
   const payload = await response.json();
   const files = Array.isArray(payload.files) ? payload.files : [];
 
+  const previousValue = fileSelect.value;
   fileSelect.innerHTML = '';
   files.forEach((filePath) => {
     const option = document.createElement('option');
@@ -163,9 +167,100 @@ async function fetchModelFiles() {
     option.value = '';
     option.textContent = '(no .js/.jscad files in models/)';
     fileSelect.appendChild(option);
+  } else if (previousValue && files.includes(previousValue)) {
+    fileSelect.value = previousValue;
   }
 
   log(`Found ${files.length} model file(s)`);
+}
+
+async function loadParameters() {
+  const filePath = fileSelect.value;
+  if (!filePath) return;
+
+  try {
+    const response = await fetch('/api/get-params', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filePath })
+    });
+    const data = await response.json();
+    renderParameterInputs(data.params || []);
+  } catch (err) {
+    log(`Error loading parameters: ${err.message}`);
+  }
+}
+
+function renderParameterInputs(params) {
+  paramsContainer.innerHTML = '';
+  if (params.length === 0) {
+    paramsContainer.innerHTML = '<p class="empty-params">No parameters defined</p>';
+    return;
+  }
+
+  params.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'param-item';
+
+    const label = document.createElement('label');
+    label.textContent = p.caption || p.name;
+    item.appendChild(label);
+
+    let input;
+    if (p.type === 'choice') {
+      input = document.createElement('select');
+      p.values.forEach((val, i) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = (p.captions && p.captions[i]) ? p.captions[i] : val;
+        if (val === p.initial) opt.selected = true;
+        input.appendChild(opt);
+      });
+    } else if (p.type === 'text') {
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = p.initial || '';
+    } else if (p.type === 'number') {
+      input = document.createElement('input');
+      input.type = 'number';
+      input.value = p.initial ?? 0;
+      if (p.step !== undefined) input.step = p.step;
+      if (p.min !== undefined) input.min = p.min;
+      if (p.max !== undefined) input.max = p.max;
+    } else if (p.type === 'checkbox' || p.type === 'bool') {
+      input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = !!p.initial;
+    }
+
+    if (input) {
+      input.dataset.name = p.name;
+      input.dataset.type = p.type;
+      item.appendChild(input);
+    }
+
+    paramsContainer.appendChild(item);
+  });
+}
+
+function getCollectedParams() {
+  const params = {};
+  const inputs = paramsContainer.querySelectorAll('input, select');
+  inputs.forEach(input => {
+    const name = input.dataset.name;
+    const type = input.dataset.type;
+    let value;
+
+    if (type === 'checkbox' || type === 'bool') {
+      value = input.checked;
+    } else if (type === 'number') {
+      value = parseFloat(input.value);
+    } else {
+      value = input.value;
+    }
+    params[name] = value;
+  });
+  return params;
 }
 
 async function renderSelectedFile() {
@@ -175,12 +270,13 @@ async function renderSelectedFile() {
     return;
   }
 
+  const params = getCollectedParams();
   setStatus('Rendering on server...');
 
   const response = await fetch('/api/server-render', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filePath })
+    body: JSON.stringify({ filePath, params })
   });
 
   const payload = await response.json().catch(() => ({}));
@@ -189,6 +285,8 @@ async function renderSelectedFile() {
   }
 
   renderStl(payload.stl || '');
+  lastStlData = payload.stl || '';
+  lastFileName = (filePath.split('/').pop() || 'model').replace(/\.[^/.]+$/, "") + '.stl';
   setStatus(`Rendered ${payload.solidsCount || 0} solid(s)`);
   log(`Rendered ${payload.filePath}`);
 }
@@ -198,15 +296,21 @@ async function boot() {
   await loadThreeDeps();
   initThree();
   await fetchModelFiles();
+  await loadParameters();
 
   refreshFilesBtn.addEventListener('click', async () => {
     try {
       await fetchModelFiles();
+      await loadParameters();
       setStatus('File list refreshed');
     } catch (error) {
       setStatus(error.message, true);
       log(`Error: ${error.message}`);
     }
+  });
+
+  fileSelect.addEventListener('change', async () => {
+    await loadParameters();
   });
 
   renderFileBtn.addEventListener('click', async () => {
@@ -216,6 +320,26 @@ async function boot() {
       setStatus(error.message, true);
       log(`Error: ${error.message}`);
     }
+  });
+
+  document.getElementById('downloadStlBtn').addEventListener('click', () => {
+    if (!lastStlData) {
+      setStatus('No STL available to download. Render first.', true);
+      return;
+    }
+    const blob = new Blob([lastStlData], { type: 'model/stl' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = lastFileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+    log(`Downloaded ${lastFileName}`);
   });
 
   window.addEventListener('resize', () => {
