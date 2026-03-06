@@ -9,7 +9,7 @@ const getParameterDefinitions = () => {
     { name: 'String2', type: 'text', caption: 'Side String', initial: 'DAS' },
     { name: 'String3', type: 'text', caption: 'Top String (Triple only)', initial: 'TRP' },
     { name: 'letterScaling', type: 'number', caption: 'Letter Scaling', initial: 1, step: 0.1 },
-    { name: 'additionalSpacing', type: 'number', caption: 'Additional Spacing (%)', initial: 0.0, step: 0.1 },
+    { name: 'additionalSpacing', type: 'number', caption: 'Additional Spacing (%)', initial: 8, step: 1 },
     { name: 'baseHeight', type: 'number', caption: 'Base Height', initial: 3, step: 0.1 },
     { name: 'Scl', type: 'number', caption: 'Global Scale', initial: 1, step: 0.1 },
     { name: 'width_of_space_character', type: 'choice', caption: 'Space Width', values: ['minimal', 'maximal'], initial: 'minimal' },
@@ -36,7 +36,8 @@ function extrudeLetter(letter, targetW, targetH, thickness, minWidth, mode, widt
 
   const segments = shapes.map((points) => {
     const p2 = geometries.path2.fromPoints({ closed: false }, points);
-    const expanded = expansions.expand({ delta: 1.5, corners: 'round', segments: 12 }, p2);
+    // Kept corners: 'edge' for sharpness, but added high segments (64) for internal curve smoothness
+    const expanded = expansions.expand({ delta: 1.5, corners: 'edge', segments: 64 }, p2);
     return extrusions.extrudeLinear({ height: thickness }, expanded);
   });
   
@@ -48,6 +49,7 @@ function extrudeLetter(letter, targetW, targetH, thickness, minWidth, mode, widt
   const scaleX = (letterW > 0) ? targetW / letterW : 1;
   const scaleY = (letterH > 0) ? targetH / letterH : 1;
   
+  // Center profile ink at [0,0] as floor
   let res = transforms.translate([-bounds[0][0], -bounds[0][1], 0], letter3D);
   res = transforms.scale([scaleX, scaleY, 1], res);
   
@@ -129,8 +131,9 @@ function main(params) {
   
   let baseHull = null;
   if (p.baseHeight > 0) {
-    const baseC1 = primitives.cylinder({ height: adjustedPadHeight, radius: padWidth / 2, segments: 50, center: [0, 0, adjustedPadHeight / 2] });
-    const baseC2 = primitives.cylinder({ height: adjustedPadHeight, radius: padWidth / 2, segments: 50, center: [endX, 0, adjustedPadHeight / 2] });
+    // Ultra-smooth base with 128 segments
+    const baseC1 = primitives.cylinder({ height: adjustedPadHeight, radius: padWidth / 2, segments: 128, center: [0, 0, adjustedPadHeight / 2] });
+    const baseC2 = primitives.cylinder({ height: adjustedPadHeight, radius: padWidth / 2, segments: 128, center: [endX, 0, adjustedPadHeight / 2] });
     baseHull = hulls.hull(baseC1, baseC2);
   }
 
